@@ -26,6 +26,10 @@ class App extends React.Component {
             <Route path={'/restaurant/'} >
               <Restaurant />
             </Route>
+            <Route
+              path={'/:linkHEX'} render={({ match }) => (
+              <Home match={match} />
+            )} />
             <Route path="/">
               <Home />
             </Route>

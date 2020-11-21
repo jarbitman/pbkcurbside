@@ -8,35 +8,111 @@ import GoogleLogin from 'react-google-login';
 import PropTypes from 'prop-types';
 import { setLoginObject } from '../redux/actions/actions';
 import { connect } from 'react-redux';
+import * as utils from '../utils.js';
+import Alert from 'react-bootstrap/Alert';
 
 class Home extends React.Component {
 
   constructor(props, context) {
     super(props, context);
     this.responseGoogle = this.responseGoogle.bind(this);
+    this.notifyArrival = this.notifyArrival.bind(this);
+
+    const Config = require('../config.json');
 
     this.state = {
-      redirect: false
+      Config,
+      API: Config.apiAddress,
+      redirect: false,
+      error: []
     };
   }
 
-  responseGoogle(e) {
-    console.log(e);
-    if (e.accessToken) {
-      this.props.setLoginObject({
-        accessToken: e.accessToken,
-        profile: e.profileObj
-      });
-      this.setState({
-        redirect: true,
-      });
-
-    } else {
-      alert('Login Failed');
+  componentDidMount() {
+    if (this.props.match && this.props.match.params.linkHEX) {
+      this.notifyArrival();
     }
   }
 
+  responseGoogle(e) {
+    const error = this.state.error;
+    if (e.accessToken) {
+
+      const confirm = {
+        f: 'validate',
+        id_token: e.tokenId,
+        email: e.profileObj.email
+      };
+
+      utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
+        if (data) {
+          if (data.status && data.status === 200) {
+            console.log('data');
+            console.log(data);
+            this.props.setLoginObject({
+              id_token: e.tokenId,
+              profile: e.profileObj,
+              restaurants: data.restaurants,
+            });
+            this.setState({
+              redirect: true
+            });
+          } else {
+            error.push({ msg: 'Login Failed.', variant: 'danger' });
+          }
+        } else {
+          error.push({ msg: 'An unexpected error occurred.', variant: 'danger' });
+        }
+
+      });
+    } else {
+      error.push({ msg: 'Login Failed.', variant: 'danger' });
+    }
+    this.setState({
+      error
+    });
+  }
+
+  notifyArrival() {
+    const error = this.state.error;
+
+    const confirm = {
+      f: 'arrive',
+      linkHEX: this.props.match.params.linkHEX
+    };
+
+
+    utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
+      if (data) {
+        if (data.status && data.status === 200) {
+          error.push({ msg: 'Thank you for confirming, the restaurant has been notified.', variant: 'success' });
+          console.log(data);
+        } else {
+          error.push({ msg: data.message, variant: data.variant });
+        }
+      } else {
+        error.push({ msg: 'An unexpected error occurred.', variant: 'danger' });
+      }
+
+      this.setState({
+        error
+      });
+    });
+  }
+
   render() {
+    if (this.state.error.length) {
+      return (
+        <Container style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
+          {
+            this.state.error.map((entry, i) => {
+              return (<Alert key={'message_' + i} variant={entry.variant}>{entry.msg}</Alert>);
+            })
+          }
+        </Container>
+      );
+    }
+
     if (this.state.redirect) {
       return (
         <Redirect from="/" to="/restaurant"/>
