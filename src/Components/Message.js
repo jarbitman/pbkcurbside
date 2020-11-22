@@ -14,6 +14,8 @@ class Message extends React.Component {
     super(props, context);
     this.acknowledgeOrder = this.acknowledgeOrder.bind(this);
     this.clearOrder = this.clearOrder.bind(this);
+    this.warnLateOrder = this.warnLateOrder.bind(this);
+
     const Config = require('../config.json');
 
     this.state = {
@@ -26,12 +28,22 @@ class Message extends React.Component {
   }
 
   componentDidMount() {
+    this.warnLateOrder();
     if (this.props.msg) {
       this.setState({
         message: this.props.msg
       });
     }
 
+  }
+
+  warnLateOrder(){
+    this.interval = setTimeout(() => {
+      this.setState({
+        variant: 'danger'
+      });
+      this.props.honkyHonk();
+    }, 1000 * 90);
   }
 
   acknowledgeOrder() {
@@ -44,6 +56,7 @@ class Message extends React.Component {
     utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
       if (data) {
         if (data.status && data.status === 200) {
+          this.warnLateOrder();
           this.setState({
             variant: 'success'
           });
@@ -64,10 +77,13 @@ class Message extends React.Component {
         <Fade>
           <Alert variant={this.state.variant}>
             <Row>
-              <Col md={9}>
-                <Row><strong>{this.state.message.guest}</strong></Row>
-                <Row><strong>Order # {this.state.message.check}</strong></Row>
-                <Row><strong>Vehicle Information</strong></Row>
+              <Col md={11}>
+                <Row style={{ padding: '1em' }}>
+                  <Alert.Heading>
+                    <strong>{this.state.message.guest} Order # {this.state.message.check}</strong>
+                  </Alert.Heading>
+                </Row>
+                <Row style={{ paddingLeft: '1em' }}><strong>Vehicle Information</strong></Row>
                 {this.state.message.car && this.state.message.car.map((entry, i) => {
                   return (
                     <div>{entry}</div>
@@ -76,12 +92,12 @@ class Message extends React.Component {
 
                 }
               </Col>
-              <Col md={3}>
+              <Col md={1} style={{ position: 'absolute', right: '10px' }}>
                 <ButtonGroup>
-                  {this.state.variant === 'warning' || this.state.variant === 'danger' ? (
-                    <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={32}/></Button>
+                  {this.state.message.status === 'arrived' ? (
+                    <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={48}/></Button>
                   ) : (
-                    <Button variant="link"><X className={'text-danger'} onClick={() => this.props.removeMessage(this.state.message.linkID)} size={32}/></Button>
+                    <Button variant="link"><X className={'text-danger'} onClick={() => this.props.removeMessage(this.state.message.linkID)} size={48}/></Button>
                   )
                   }
                 </ButtonGroup>

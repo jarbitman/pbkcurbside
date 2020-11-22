@@ -67,7 +67,7 @@ class Restaurant extends React.Component {
   }
 
   connect = () => {
-    let ws = new WebSocket('ws://localhost:8080/');
+    let ws = new WebSocket(this.state.Config.websocket);
     let that = this; // cache the this
     let connectInterval;
 
@@ -77,6 +77,9 @@ class Restaurant extends React.Component {
         ws: ws,
         error: {}
       });
+      if(this.state.restaurantID){
+        this.getPending();
+      }
 
       that.timeout = 250; // reset timer to 250 on open of websocket connection
       clearTimeout(connectInterval); // clear Interval on on open of websocket connection
@@ -85,12 +88,11 @@ class Restaurant extends React.Component {
     // websocket onclose event listener
     ws.onclose = e => {
       this.setState({
-        error: { msg: 'Not connected to server. Contact PBK Support if this message does not go away. Attempting to recoonect.', variant: 'danger' },
-        restaurantID: null,
-        restaurantName: null,
+        messages: [],
+        error: { msg: 'Not connected to server. Attempting to reconnect.', variant: 'danger' },
       });
 
-      console.log(
+        console.log(
         `Socket is closed. Reconnect will be attempted in ${Math.min(
           10000 / 1000,
           (that.timeout + that.timeout) / 1000
@@ -171,11 +173,11 @@ class Restaurant extends React.Component {
           if (data.status && data.status === 200 && data.orders.length) {
             const messages = this.state.messages;
             data.orders.map((entry, i) => {
-              console.log(entry);
               messages.push({
                 guest: entry.guest,
                 linkID: entry.linkID,
                 check: entry.check,
+                status: entry.status,
                 car: entry.car,
               });
             })
@@ -283,7 +285,7 @@ class Restaurant extends React.Component {
           {this.props.loggedIn.restaurants.map((entry, i) => {
             return (
               <Row style={{ paddingTop: '1em' }}>
-                <Button style={{ width: '100%', textAlign: 'center' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}>{entry.restaurantName}</Button>
+                <Button style={{ width: '100%', textAlign: 'center',padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4>{entry.restaurantName}</h4></Button>
               </Row>
             );
           })}
@@ -293,18 +295,18 @@ class Restaurant extends React.Component {
 
     return (
       <Container style={{ paddingTop: '1em' }}>
-        <h3>{this.state.restaurantName} Curbside Orders</h3>
+        <h3 style={{color: utils.pbkStyle.orange, fontWeight: 'bold'}}>{this.state.restaurantName} Curbside Orders</h3>
         {this.state.messages.length === 0 ? (
           <Alert variant={'primary'}>There are no guests waiting.</Alert>
         ) : (
           <>
-            <div>Waiting Guests: <strong>{this.state.messages.length}</strong></div>
+            <h4  style={{color: utils.pbkStyle.blue, fontWeight: 'bold', paddingBottom: '1em'}}>Waiting Guests: <strong>{this.state.messages.length}</strong></h4>
             <div style={{ height: '75vh', overflowY: 'auto' }}>
               {
                 this.state.messages.map((entry, i) => {
                   //   let parsed = JSON.parse(entry.msg)
                   return (
-                    <Message key={'message_' + i} removeMessage={this.removeMessage} count={this.state.count} msg={entry}/>
+                    <Message key={'message_' + i} honkyHonk={this.honkyHonk} removeMessage={this.removeMessage} count={this.state.count} msg={entry}/>
                   );
                 })
               }

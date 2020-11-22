@@ -122,7 +122,7 @@ class Home extends React.Component {
       <Container>
         <Row style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
           <Col>
-            <a href={'https://proteinbar.thelevelup.com/'} target={'_blank'}><Button variant={'outline-primary'}>Order PBK Curbside</Button></a>
+            <a href={'https://proteinbar.thelevelup.com/'} target="_blank" rel="noreferrer"><Button variant={'outline-primary'}>Order PBK Curbside</Button></a>
           </Col>
         </Row>
         <Row style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
