@@ -38,7 +38,7 @@ class Message extends React.Component {
 
     const confirm = {
       f: 'acknowledgeGuest',
-      linkHEX: this.state.message.link
+      linkHEX: this.state.message.linkID
     };
 
     utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
@@ -81,7 +81,7 @@ class Message extends React.Component {
                   {this.state.variant === 'warning' || this.state.variant === 'danger' ? (
                     <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={32}/></Button>
                   ) : (
-                    <Button variant="link"><X className={'text-danger'} onClick={() => this.props.removeMessage(this.state.message.link)} size={32}/></Button>
+                    <Button variant="link"><X className={'text-danger'} onClick={() => this.props.removeMessage(this.state.message.linkID)} size={32}/></Button>
                   )
                   }
                 </ButtonGroup>

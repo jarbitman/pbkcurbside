@@ -23,6 +23,7 @@ class Restaurant extends React.Component {
     this.handleDisconnect = this.handleDisconnect.bind(this);
     this.handleConnect = this.handleConnect.bind(this);
     this.selectRestaurant = this.selectRestaurant.bind(this);
+    this.honkyHonk = this.honkyHonk.bind(this);
 
     const Config = require('../config.json');
 
@@ -50,7 +51,19 @@ class Restaurant extends React.Component {
     if (this.state.ws && prevState.restaurantID !== this.state.restaurantID) {
       const data = { function: "setRestaurant", restaurantID: this.state.restaurantID };
       this.state.ws.send(JSON.stringify(data));
+      this.getPending();
     }
+  }
+
+  honkyHonk(){
+    const bell = new UIfx(
+      honk,
+      {
+        volume: 0.4, // number between 0.0 ~ 1.0
+        throttleMs: 100
+      }
+    );
+    bell.play();
   }
 
   connect = () => {
@@ -73,7 +86,8 @@ class Restaurant extends React.Component {
     ws.onclose = e => {
       this.setState({
         error: { msg: 'Not connected to server. Contact PBK Support if this message does not go away. Attempting to recoonect.', variant: 'danger' },
-        connected: 0
+        restaurantID: null,
+        restaurantName: null,
       });
 
       console.log(
@@ -90,23 +104,13 @@ class Restaurant extends React.Component {
 
     ws.onmessage = data => {
 
-      const bell = new UIfx(
-        honk,
-        {
-          volume: 0.4, // number between 0.0 ~ 1.0
-          throttleMs: 100
-        }
-      );
-      console.log(data)
       const messages = this.state.messages;
       const parsed = JSON.parse(data.data);
-      console.log(parsed)
-      console.log(JSON.parse(parsed.msg))
       messages.push(JSON.parse(parsed.msg));
       this.setState({
         messages
       });
-      bell.play();
+      this.honkyHonk();
     };
 
     // websocket onerror event listener
@@ -140,13 +144,13 @@ class Restaurant extends React.Component {
 
       const confirm = {
         f: 'clearGuest',
-        linkHEX: id
+        linkHEX: id,
       };
 
       utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
         if (data) {
           if (data.status && data.status === 200) {
-            const messages = this.state.messages.filter((item, index) => item.link !== id);
+            const messages = this.state.messages.filter((item, index) => item.linkID !== id);
             this.setState({
               messages
             });
@@ -154,6 +158,35 @@ class Restaurant extends React.Component {
         }
       });
     }
+  }
+
+  getPending() {
+      const confirm = {
+        f: 'pending',
+        restaurantID: this.state.restaurantID,
+      };
+
+      utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
+        if (data) {
+          if (data.status && data.status === 200 && data.orders.length) {
+            const messages = this.state.messages;
+            data.orders.map((entry, i) => {
+              console.log(entry);
+              messages.push({
+                guest: entry.guest,
+                linkID: entry.linkID,
+                check: entry.check,
+                car: entry.car,
+              });
+            })
+
+            this.setState({
+              messages
+            });
+            this.honkyHonk();
+          }
+        }
+      });
   }
 
   handleDisconnect() {
@@ -218,6 +251,7 @@ class Restaurant extends React.Component {
   }
 
   render() {
+    console.log(this.state.messages);
     if (this.props.loggedIn && this.props.loggedIn.id_token === '') {
       return (
         <Row style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
