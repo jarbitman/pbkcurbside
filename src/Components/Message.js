@@ -37,7 +37,7 @@ class Message extends React.Component {
 
   }
 
-  warnLateOrder(){
+  warnLateOrder() {
     this.interval = setTimeout(() => {
       this.setState({
         variant: 'danger'
@@ -52,13 +52,20 @@ class Message extends React.Component {
       f: 'acknowledgeGuest',
       linkHEX: this.state.message.linkID
     };
-
+    const message = {
+      status: 'acknowledged',
+      car: this.state.message.car,
+      guest: this.state.message.guest,
+      check: this.state.message.check,
+      linkID: this.state.message.linkID,
+    }
     utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
       if (data) {
         if (data.status && data.status === 200) {
           this.warnLateOrder();
           this.setState({
-            variant: 'success'
+            variant: 'success',
+            message
           });
         }
       }
@@ -66,12 +73,14 @@ class Message extends React.Component {
   }
 
   clearOrder() {
-    this.setState({
-      show: false
-    });
+    if (this.interval) {
+      clearTimeout(this.interval);
+    }
+    this.props.removeMessage(this.state.message.linkID);
   }
 
   render() {
+    console.log(this.state)
     if (this.props.msg) {
       return (
         <Fade>
@@ -97,7 +106,7 @@ class Message extends React.Component {
                   {this.state.message.status === 'arrived' ? (
                     <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={48}/></Button>
                   ) : (
-                    <Button variant="link"><X className={'text-danger'} onClick={() => this.props.removeMessage(this.state.message.linkID)} size={48}/></Button>
+                    <Button variant="link"><X className={'text-danger'} onClick={() => this.clearOrder()} size={48}/></Button>
                   )
                   }
                 </ButtonGroup>

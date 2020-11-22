@@ -10,6 +10,7 @@ import { setLoginObject } from '../redux/actions/actions';
 import { connect } from 'react-redux';
 import * as utils from '../utils.js';
 import Alert from 'react-bootstrap/Alert';
+import Spinner from 'react-bootstrap/Spinner';
 
 class Home extends React.Component {
 
@@ -24,12 +25,17 @@ class Home extends React.Component {
       Config,
       API: Config.apiAddress,
       redirect: false,
-      error: []
+      error: [],
+      spinner: false
     };
   }
 
   componentDidMount() {
     if (this.props.match && this.props.match.params.linkHEX) {
+      this.setState({
+        spinner: true
+      });
+
       this.notifyArrival();
     }
   }
@@ -47,12 +53,10 @@ class Home extends React.Component {
       utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
         if (data) {
           if (data.status && data.status === 200) {
-            console.log('data');
-            console.log(data);
             this.props.setLoginObject({
               id_token: e.tokenId,
               profile: e.profileObj,
-              restaurants: data.restaurants,
+              restaurants: data.restaurants
             });
             this.setState({
               redirect: true
@@ -95,12 +99,20 @@ class Home extends React.Component {
       }
 
       this.setState({
+        spinner: false,
         error
       });
     });
   }
 
   render() {
+    if (this.state.spinner) {
+      return (
+        <Container style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
+          <Spinner animation="border" variant="primary"/>
+        </Container>
+      );
+    }
     if (this.state.error.length) {
       return (
         <Container style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>

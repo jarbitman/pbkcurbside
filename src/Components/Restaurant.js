@@ -12,6 +12,7 @@ import UIfx from 'uifx';
 import honk from './Audio/horn.wav';
 import * as utils from '../utils';
 import Button from 'react-bootstrap/Button';
+import Spinner from 'react-bootstrap/Spinner';
 
 class Restaurant extends React.Component {
 
@@ -36,6 +37,7 @@ class Restaurant extends React.Component {
       restaurantID: null,
       restaurantName: null,
       sentRestaurant: null,
+      spinner: false,
       ws: null
     };
   }
@@ -49,13 +51,16 @@ class Restaurant extends React.Component {
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (this.state.ws && prevState.restaurantID !== this.state.restaurantID) {
-      const data = { function: "setRestaurant", restaurantID: this.state.restaurantID };
+      const data = { function: 'setRestaurant', restaurantID: this.state.restaurantID };
       this.state.ws.send(JSON.stringify(data));
+      this.setState({
+        spinner: false,
+      });
       this.getPending();
     }
   }
 
-  honkyHonk(){
+  honkyHonk() {
     const bell = new UIfx(
       honk,
       {
@@ -77,7 +82,7 @@ class Restaurant extends React.Component {
         ws: ws,
         error: {}
       });
-      if(this.state.restaurantID){
+      if (this.state.restaurantID) {
         this.getPending();
       }
 
@@ -89,10 +94,10 @@ class Restaurant extends React.Component {
     ws.onclose = e => {
       this.setState({
         messages: [],
-        error: { msg: 'Not connected to server. Attempting to reconnect.', variant: 'danger' },
+        error: { msg: 'Not connected to server. Attempting to reconnect.', variant: 'danger' }
       });
 
-        console.log(
+      console.log(
         `Socket is closed. Reconnect will be attempted in ${Math.min(
           10000 / 1000,
           (that.timeout + that.timeout) / 1000
@@ -137,7 +142,8 @@ class Restaurant extends React.Component {
   selectRestaurant(e) {
     this.setState({
       restaurantName: e.target.dataset.name,
-      restaurantID: e.target.dataset.res
+      restaurantID: e.target.dataset.res,
+      spinner: true,
     });
   }
 
@@ -146,7 +152,7 @@ class Restaurant extends React.Component {
 
       const confirm = {
         f: 'clearGuest',
-        linkHEX: id,
+        linkHEX: id
       };
 
       utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
@@ -163,25 +169,24 @@ class Restaurant extends React.Component {
   }
 
   getPending() {
+    if(this.state.restaurantID) {
       const confirm = {
         f: 'pending',
-        restaurantID: this.state.restaurantID,
+        restaurantID: this.state.restaurantID
       };
-
+      const messages = this.state.messages;
       utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
         if (data) {
           if (data.status && data.status === 200 && data.orders.length) {
-            const messages = this.state.messages;
             data.orders.map((entry, i) => {
               messages.push({
                 guest: entry.guest,
                 linkID: entry.linkID,
                 check: entry.check,
                 status: entry.status,
-                car: entry.car,
+                car: entry.car
               });
-            })
-
+            });
             this.setState({
               messages
             });
@@ -189,6 +194,7 @@ class Restaurant extends React.Component {
           }
         }
       });
+    }
   }
 
   handleDisconnect() {
@@ -253,7 +259,15 @@ class Restaurant extends React.Component {
   }
 
   render() {
-    console.log(this.state.messages);
+
+    if (this.state.spinner) {
+      return (
+        <Container style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
+          <Spinner animation="border" variant="primary"/>
+        </Container>
+      );
+    }
+
     if (this.props.loggedIn && this.props.loggedIn.id_token === '') {
       return (
         <Row style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
@@ -285,7 +299,7 @@ class Restaurant extends React.Component {
           {this.props.loggedIn.restaurants.map((entry, i) => {
             return (
               <Row style={{ paddingTop: '1em' }}>
-                <Button style={{ width: '100%', textAlign: 'center',padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4>{entry.restaurantName}</h4></Button>
+                <Button key={'button_' + i} style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4>{entry.restaurantName}</h4></Button>
               </Row>
             );
           })}
@@ -295,12 +309,12 @@ class Restaurant extends React.Component {
 
     return (
       <Container style={{ paddingTop: '1em' }}>
-        <h3 style={{color: utils.pbkStyle.orange, fontWeight: 'bold'}}>{this.state.restaurantName} Curbside Orders</h3>
+        <h3 style={{ color: utils.pbkStyle.orange, fontWeight: 'bold' }}>{this.state.restaurantName} Curbside Orders</h3>
         {this.state.messages.length === 0 ? (
           <Alert variant={'primary'}>There are no guests waiting.</Alert>
         ) : (
           <>
-            <h4  style={{color: utils.pbkStyle.blue, fontWeight: 'bold', paddingBottom: '1em'}}>Waiting Guests: <strong>{this.state.messages.length}</strong></h4>
+            <h4 style={{ color: utils.pbkStyle.blue, fontWeight: 'bold', paddingBottom: '1em' }}>Waiting Guests: <strong>{this.state.messages.length}</strong></h4>
             <div style={{ height: '75vh', overflowY: 'auto' }}>
               {
                 this.state.messages.map((entry, i) => {
