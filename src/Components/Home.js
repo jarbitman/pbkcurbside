@@ -90,7 +90,6 @@ class Home extends React.Component {
       if (data) {
         if (data.status && data.status === 200) {
           error.push({ msg: 'Thank you for confirming, the restaurant has been notified.', variant: 'success' });
-          console.log(data);
         } else {
           error.push({ msg: data.message, variant: data.variant });
         }

@@ -80,7 +80,6 @@ class Message extends React.Component {
   }
 
   render() {
-    console.log(this.state)
     if (this.props.msg) {
       return (
         <Fade>
