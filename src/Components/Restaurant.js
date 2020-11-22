@@ -140,9 +140,10 @@ class Restaurant extends React.Component {
   };
 
   selectRestaurant(e) {
+    const data = e.target.dataset;
     this.setState({
-      restaurantName: e.target.dataset.name,
-      restaurantID: e.target.dataset.res,
+      restaurantName: data.name,
+      restaurantID: data.res,
       spinner: true,
     });
   }
@@ -259,7 +260,6 @@ class Restaurant extends React.Component {
   }
 
   render() {
-
     if (this.state.spinner) {
       return (
         <Container style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
@@ -298,8 +298,8 @@ class Restaurant extends React.Component {
           <h2>Please Select Your Restaurant</h2>
           {this.props.loggedIn.restaurants.map((entry, i) => {
             return (
-              <Row style={{ paddingTop: '1em' }}>
-                <Button key={'button_' + i} style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4>{entry.restaurantName}</h4></Button>
+              <Row key={'button_' + i} style={{ paddingTop: '1em' }}>
+                <Button style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4>{entry.restaurantName}</h4></Button>
               </Row>
             );
           })}
