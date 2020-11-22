@@ -85,7 +85,7 @@ class Message extends React.Component {
         <Fade>
           <Alert variant={this.state.variant}>
             <Row>
-              <Col md={11}>
+              <Col sm={11}>
                 <Row style={{ padding: '1em' }}>
                   <Alert.Heading>
                     <strong>{this.state.message.guest} Order # {this.state.message.check}</strong>
@@ -100,7 +100,7 @@ class Message extends React.Component {
 
                 }
               </Col>
-              <Col md={1} style={{ position: 'absolute', right: '10px' }}>
+              <Col sm={1} style={{ position: 'absolute', right: '10px' }}>
                 <ButtonGroup>
                   {this.state.message.status === 'arrived' ? (
                     <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={48}/></Button>
