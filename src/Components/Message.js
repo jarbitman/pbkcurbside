@@ -18,6 +18,8 @@ class Message extends React.Component {
 
     const Config = require('../config.json');
 
+    this.honktimeout = null;
+
     this.state = {
       Config,
       API: Config.apiAddress,
@@ -26,6 +28,7 @@ class Message extends React.Component {
       message: {}
     };
   }
+
 
   componentDidMount() {
     this.warnLateOrder();
@@ -37,21 +40,21 @@ class Message extends React.Component {
 
   }
 
+  componentWillUnmount() {
+    return () => clearTimeout(this.honktimeout);
+  }
+
   warnLateOrder() {
-    this.interval = setTimeout(() => {
+    this.honktimeout = setTimeout(() => {
       this.setState({
         variant: 'danger'
       });
-      this.props.honkyHonk();
+
     }, 1000 * 90);
   }
 
   acknowledgeOrder() {
-
-    const confirm = {
-      f: 'acknowledgeGuest',
-      linkHEX: this.state.message.linkID
-    };
+    this.props.removeMessage(this.state.message.linkID, 'acknowledgeGuest');
     const message = {
       status: 'acknowledged',
       car: this.state.message.car,
@@ -59,24 +62,15 @@ class Message extends React.Component {
       check: this.state.message.check,
       linkID: this.state.message.linkID,
     }
-    utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
-      if (data) {
-        if (data.status && data.status === 200) {
-          this.warnLateOrder();
-          this.setState({
-            variant: 'success',
-            message
-          });
-        }
-      }
+    this.warnLateOrder();
+    this.setState({
+      variant: 'success',
+      message
     });
   }
 
   clearOrder() {
-    if (this.interval) {
-      clearTimeout(this.interval);
-    }
-    this.props.removeMessage(this.state.message.linkID);
+    this.props.removeMessage(this.state.message.linkID, 'clearGuest');
   }
 
   render() {

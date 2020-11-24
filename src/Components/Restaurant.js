@@ -25,6 +25,11 @@ class Restaurant extends React.Component {
     this.handleConnect = this.handleConnect.bind(this);
     this.selectRestaurant = this.selectRestaurant.bind(this);
     this.honkyHonk = this.honkyHonk.bind(this);
+    this.parseMessage = this.parseMessage.bind(this);
+    this.addMessage = this.addMessage.bind(this);
+    this.setRestaurant = this.setRestaurant.bind(this);
+    this.handlePending = this.handlePending.bind(this);
+    this.getPending = this.getPending.bind(this);
 
     const Config = require('../config.json');
 
@@ -50,14 +55,7 @@ class Restaurant extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.state.ws && prevState.restaurantID !== this.state.restaurantID) {
-      const data = { function: 'setRestaurant', restaurantID: this.state.restaurantID };
-      this.state.ws.send(JSON.stringify(data));
-      this.setState({
-        spinner: false,
-      });
-      this.getPending();
-    }
+
   }
 
   honkyHonk() {
@@ -110,14 +108,7 @@ class Restaurant extends React.Component {
     };
 
     ws.onmessage = data => {
-
-      const messages = this.state.messages;
-      const parsed = JSON.parse(data.data);
-      messages.push(JSON.parse(parsed.msg));
-      this.setState({
-        messages
-      });
-      this.honkyHonk();
+      this.parseMessage(data);
     };
 
     // websocket onerror event listener
@@ -132,6 +123,33 @@ class Restaurant extends React.Component {
     };
   };
 
+  parseMessage(data) {
+    const parsed = JSON.parse(data.data);
+    if (parsed.msg.function === 'addMessage') {
+      this.addMessage(parsed);
+    } else if (parsed.msg.function === 'clearGuest') {
+      if (parsed.msg.status && parsed.msg.status === 200) {
+        const messages = this.state.messages.filter((item, index) => item.linkID !== parsed.msg.id);
+        this.setState({
+          messages
+        });
+      }
+    } else if (parsed.msg.function === 'pending') {
+      this.handlePending(parsed);
+    }
+
+  }
+
+  addMessage(data) {
+
+    const messages = this.state.messages;
+    messages.push(JSON.parse(data.msg.data));
+    this.setState({
+      messages
+    });
+    this.honkyHonk();
+  }
+
   check = () => {
     const { ws } = this.state;
     if (!ws || ws.readyState === WebSocket.CLOSED) {
@@ -141,60 +159,67 @@ class Restaurant extends React.Component {
 
   selectRestaurant(e) {
     const data = e.target.dataset;
-    this.setState({
-      restaurantName: data.name,
-      restaurantID: data.res,
-      spinner: true,
-    });
-  }
 
-  removeMessage(id) {
-    if (id) {
+    if (data.res) {
+      this.setState({
+        restaurantName: data.name,
+        restaurantID: data.res,
+        spinner: true
+      }, () => {
+        this.setRestaurant();
+        const confirm = { function: 'setRestaurant', restaurantID: this.state.restaurantID };
 
-      const confirm = {
-        f: 'clearGuest',
-        linkHEX: id
-      };
-
-      utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
-        if (data) {
-          if (data.status && data.status === 200) {
-            const messages = this.state.messages.filter((item, index) => item.linkID !== id);
-            this.setState({
-              messages
-            });
-          }
-        }
+        this.state.ws.send(JSON.stringify(confirm));
+        this.getPending();
       });
     }
   }
 
-  getPending() {
-    if(this.state.restaurantID) {
+  setRestaurant() {
+    this.setState({
+      spinner: false
+    });
+  }
+
+  removeMessage(id, f) {
+    if (id) {
       const confirm = {
-        f: 'pending',
+        function: f,
+        linkHEX: id,
         restaurantID: this.state.restaurantID
       };
+      this.state.ws.send(JSON.stringify(confirm));
+    }
+  }
+
+  getPending() {
+    if (this.state.restaurantID) {
+      const confirm = {
+        function: 'pending',
+        restaurantID: this.state.restaurantID
+      };
+      this.state.ws.send(JSON.stringify(confirm));
+    }
+  }
+
+  handlePending(data) {
+    if (data) {
       const messages = this.state.messages;
-      utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
-        if (data) {
-          if (data.status && data.status === 200 && data.orders.length) {
-            data.orders.map((entry, i) => {
-              messages.push({
-                guest: entry.guest,
-                linkID: entry.linkID,
-                check: entry.check,
-                status: entry.status,
-                car: entry.car
-              });
-            });
-            this.setState({
-              messages
-            });
-            this.honkyHonk();
-          }
-        }
-      });
+      if (data.msg.status && data.msg.status === 200 && data.msg.orders && data.msg.orders.length) {
+        data.msg.orders.map((entry) => {
+          messages.push({
+            guest: entry.guest,
+            linkID: entry.linkID,
+            check: entry.check,
+            status: entry.status,
+            car: entry.car
+          });
+        });
+        this.setState({
+          messages
+        });
+        this.honkyHonk();
+      }
     }
   }
 
@@ -299,7 +324,8 @@ class Restaurant extends React.Component {
           {this.props.loggedIn.restaurants.map((entry, i) => {
             return (
               <Row key={'button_' + i} style={{ paddingTop: '1em' }}>
-                <Button style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4>{entry.restaurantName}</h4></Button>
+                <Button style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4 data-res={entry.restaurantID}
+                                                                                                                                                                                                                   data-name={entry.restaurantName}>{entry.restaurantName}</h4></Button>
               </Row>
             );
           })}
