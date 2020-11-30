@@ -6,7 +6,6 @@ import Button from 'react-bootstrap/Button';
 import Fade from 'react-bootstrap/Fade';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import * as utils from '../utils';
 
 class Message extends React.Component {
 
@@ -80,15 +79,14 @@ class Message extends React.Component {
           <Alert variant={this.state.variant}>
             <Row>
               <Col sm={11}>
-                <Row style={{ padding: '1em' }}>
                   <Alert.Heading>
                     <strong>{this.state.message.guest} Order # {this.state.message.check}</strong>
                   </Alert.Heading>
-                </Row>
-                <Row style={{ paddingLeft: '1em' }}><strong>Vehicle Information</strong></Row>
+                <hr />
+                <p className="mb-0"><strong>Vehicle Information:</strong></p>
                 {this.state.message.car && this.state.message.car.map((entry, i) => {
                   return (
-                    <div>{entry}</div>
+                    <p key={'mod_' + i}>{entry}</p>
                   );
                 })
 

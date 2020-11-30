@@ -1,6 +1,6 @@
 import React from 'react';
 import GoogleLogin from 'react-google-login';
-import { setLoginObject } from '../redux/actions/actions';
+import { setLoginObject, setRestaurantObject } from '../redux/actions/actions';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Container from 'react-bootstrap/Container';
@@ -30,6 +30,7 @@ class Restaurant extends React.Component {
     this.setRestaurant = this.setRestaurant.bind(this);
     this.handlePending = this.handlePending.bind(this);
     this.getPending = this.getPending.bind(this);
+    this.heartbeat = this.heartbeat.bind(this);
 
     const Config = require('../config.json');
 
@@ -43,7 +44,8 @@ class Restaurant extends React.Component {
       restaurantName: null,
       sentRestaurant: null,
       spinner: false,
-      ws: null
+      ws: null,
+      heartbeat: false,
     };
   }
 
@@ -80,9 +82,18 @@ class Restaurant extends React.Component {
         ws: ws,
         error: {}
       });
-      if (this.state.restaurantID) {
+
+      if (this.props.restaurant.id) {
         this.getPending();
       }
+      setInterval(() => {
+        const confirm = {"function": "heartbeat", "restaurantID": this.props.restaurant.id}
+        ws.send(JSON.stringify(confirm));
+        this.setState({heartbeat: true});
+        setTimeout(() => {
+          this.heartbeat();
+        }, 5 * 1000);
+      }, 5 * 60 * 1000);
 
       that.timeout = 250; // reset timer to 250 on open of websocket connection
       clearTimeout(connectInterval); // clear Interval on on open of websocket connection
@@ -127,6 +138,8 @@ class Restaurant extends React.Component {
     const parsed = JSON.parse(data.data);
     if (parsed.msg.function === 'addMessage') {
       this.addMessage(parsed);
+      const confirm = {"function": "notifyRestaurant","linkHEX": parsed.msg.data.linkID}
+      this.state.ws.send(JSON.stringify(confirm))
     } else if (parsed.msg.function === 'clearGuest') {
       if (parsed.msg.status && parsed.msg.status === 200) {
         const messages = this.state.messages.filter((item, index) => item.linkID !== parsed.msg.id);
@@ -136,6 +149,8 @@ class Restaurant extends React.Component {
       }
     } else if (parsed.msg.function === 'pending') {
       this.handlePending(parsed);
+    } else if(parsed.msg.function === 'heartbeat'){
+      this.setState({heartbeat: false});
     }
 
   }
@@ -158,20 +173,20 @@ class Restaurant extends React.Component {
   };
 
   selectRestaurant(e) {
+    this.setState({spinner: true});
     const data = e.target.dataset;
 
     if (data.res) {
-      this.setState({
-        restaurantName: data.name,
-        restaurantID: data.res,
-        spinner: true
-      }, () => {
+
+      this.props.setRestaurantObject({
+        name: data.name,
+        id: data.res,
+      });
         this.setRestaurant();
-        const confirm = { function: 'setRestaurant', restaurantID: this.state.restaurantID };
+        const confirm = { function: 'setRestaurant', restaurantID: data.res };
 
         this.state.ws.send(JSON.stringify(confirm));
         this.getPending();
-      });
     }
   }
 
@@ -186,27 +201,35 @@ class Restaurant extends React.Component {
       const confirm = {
         function: f,
         linkHEX: id,
-        restaurantID: this.state.restaurantID
+        restaurantID: this.props.restaurant.id
       };
       this.state.ws.send(JSON.stringify(confirm));
     }
   }
 
   getPending() {
-    if (this.state.restaurantID) {
+    if (this.props.restaurant.id) {
       const confirm = {
         function: 'pending',
-        restaurantID: this.state.restaurantID
+        restaurantID: this.props.restaurant.id
       };
       this.state.ws.send(JSON.stringify(confirm));
+    }
+  }
+
+  heartbeat(){
+    if(this.state.heartbeat){
+      this.setState({heartbeat: false});
+      this.connect();
     }
   }
 
   handlePending(data) {
     if (data) {
       const messages = this.state.messages;
-      if (data.msg.status && data.msg.status === 200 && data.msg.orders && data.msg.orders.length) {
-        data.msg.orders.map((entry) => {
+      const orders = data.msg.orders;
+      if (data.msg.status && data.msg.status === 200 && orders && orders.length) {
+        orders.forEach((entry) => {
           messages.push({
             guest: entry.guest,
             linkID: entry.linkID,
@@ -317,7 +340,7 @@ class Restaurant extends React.Component {
       );
     }
 
-    if (!this.state.restaurantID) {
+    if (!this.props.restaurant.id) {
       return (
         <Container style={{ paddingTop: '1em' }}>
           <h2>Please Select Your Restaurant</h2>
@@ -335,7 +358,6 @@ class Restaurant extends React.Component {
 
     return (
       <Container style={{ paddingTop: '1em' }}>
-        <h3 style={{ color: utils.pbkStyle.orange, fontWeight: 'bold' }}>{this.state.restaurantName} Curbside Orders</h3>
         {this.state.messages.length === 0 ? (
           <Alert variant={'primary'}>There are no guests waiting.</Alert>
         ) : (
@@ -361,13 +383,19 @@ class Restaurant extends React.Component {
 
 
 const mapStateToProps = (state) => {
-  return { loggedIn: state.loggedIn };
+  return {
+    loggedIn: state.loggedIn,
+    restaurant: state.restaurant,
+  };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
     setLoginObject: (loggedIn) => {
       dispatch(setLoginObject(loggedIn));
+    },
+    setRestaurantObject: (restaurant) => {
+      dispatch(setRestaurantObject(restaurant));
     }
   };
 };
