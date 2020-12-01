@@ -164,6 +164,8 @@ class Restaurant extends React.Component {
       this.handlePending(parsed);
     } else if(parsed.msg.function === 'heartbeat'){
       this.setState({heartbeat: false});
+    } else if(parsed.msg.function === 'refresh'){
+      window.location.reload(false);
     }
 
   }

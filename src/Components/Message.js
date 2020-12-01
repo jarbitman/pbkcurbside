@@ -108,7 +108,7 @@ class Message extends React.Component {
                     <strong>{this.state.message.guest} Order # {this.state.message.check}</strong>
                   </Alert.Heading>
                 <p>Arrived: {this.state.message.arrived}</p>
-                <h5><strong>Waiting: {ms(this.state.time)}</strong></h5>
+                <h5><strong>Waiting: {ms(Math.round(this.state.time/1000)*1000)}</strong></h5>
                 <hr />
                 <p className="mb-0"><strong>Vehicle Information:</strong></p>
                 {this.state.message.car && this.state.message.car.map((entry, i) => {
