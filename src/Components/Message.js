@@ -6,6 +6,7 @@ import Button from 'react-bootstrap/Button';
 import Fade from 'react-bootstrap/Fade';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+const ms = require('pretty-ms')
 
 class Message extends React.Component {
 
@@ -24,7 +25,11 @@ class Message extends React.Component {
       API: Config.apiAddress,
       show: true,
       variant: 'warning',
-      message: {}
+      message: {},
+      time: 0,
+      start: 0,
+      isOn: false,
+      arrived: '',
     };
   }
 
@@ -32,14 +37,33 @@ class Message extends React.Component {
   componentDidMount() {
     this.warnLateOrder();
     if (this.props.msg) {
+      console.log(this.props.msg)
+      let milliseconds = Date.now();
+      if(this.props.msg.ats){
+        milliseconds = this.props.msg.ats * 1000;
+      }
+      const dateName = new Date().getTime() *1000;
       this.setState({
-        message: this.props.msg
+
+        message: this.props.msg,
+        isOn: true,
+        time: dateName,
+        arrived: Date.now(),
+        start: milliseconds - this.state.time
       });
+      this.timer = setInterval(() => this.setState({
+        time: Date.now() - this.state.start
+      }), 1000);
     }
 
   }
 
   componentWillUnmount() {
+    this.setState({
+      time: 0,
+      start: 0,
+      isOn: false,
+    })
     return () => clearTimeout(this.honktimeout);
   }
 
@@ -60,6 +84,7 @@ class Message extends React.Component {
       guest: this.state.message.guest,
       check: this.state.message.check,
       linkID: this.state.message.linkID,
+      arrived: this.state.message.arrived,
     }
     this.warnLateOrder();
     this.setState({
@@ -82,6 +107,8 @@ class Message extends React.Component {
                   <Alert.Heading>
                     <strong>{this.state.message.guest} Order # {this.state.message.check}</strong>
                   </Alert.Heading>
+                <p>Arrived: {this.state.message.arrived}</p>
+                <h5><strong>Waiting: {ms(this.state.time)}</strong></h5>
                 <hr />
                 <p className="mb-0"><strong>Vehicle Information:</strong></p>
                 {this.state.message.car && this.state.message.car.map((entry, i) => {

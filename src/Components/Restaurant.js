@@ -83,6 +83,7 @@ class Restaurant extends React.Component {
     let ws = new WebSocket(this.state.Config.websocket);
     let that = this; // cache the this
     let connectInterval;
+    let heartbeet;
 
     // websocket onopen event listener
     ws.onopen = () => {
@@ -97,7 +98,7 @@ class Restaurant extends React.Component {
         this.state.ws.send(JSON.stringify(confirm));
         this.getPending();
       }
-      setInterval(() => {
+      heartbeet = setInterval(() => {
         const confirm = {"function": "heartbeat", "restaurantID": this.props.restaurant.id, "ip": this.state.ip}
         ws.send(JSON.stringify(confirm));
         this.setState({heartbeat: true});
@@ -116,6 +117,7 @@ class Restaurant extends React.Component {
         messages: [],
         error: { msg: 'Not connected to server. Attempting to reconnect.', variant: 'danger' }
       });
+      clearInterval(heartbeet)
 
       console.log(
         `Socket is closed. Reconnect will be attempted in ${Math.min(
@@ -244,13 +246,16 @@ class Restaurant extends React.Component {
       const messages = [];
       const orders = data.msg.orders;
       if (data.msg.status && data.msg.status === 200 && orders && orders.length) {
+     //   console.log(orders)
         orders.forEach((entry) => {
           messages.push({
             guest: entry.guest,
             linkID: entry.linkID,
             check: entry.check,
             status: entry.status,
-            car: entry.car
+            car: entry.car,
+            arrived: entry.arrived,
+            ats: entry.ats,
           });
         });
         this.setState({
