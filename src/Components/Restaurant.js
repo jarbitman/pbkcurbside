@@ -197,7 +197,11 @@ class Restaurant extends React.Component {
         const confirm = { function: 'setRestaurant', restaurantID: data.res, "ip": this.state.ip };
 
         this.state.ws.send(JSON.stringify(confirm));
-        this.getPending();
+      const pending = {
+        function: 'pending',
+        restaurantID: data.res
+      };
+      this.state.ws.send(JSON.stringify(pending));
     }
   }
 
