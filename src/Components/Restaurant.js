@@ -46,6 +46,7 @@ class Restaurant extends React.Component {
       spinner: false,
       ws: null,
       heartbeat: false,
+      ip: '',
     };
   }
 
@@ -53,6 +54,13 @@ class Restaurant extends React.Component {
   timeout = 250;
 
   componentDidMount() {
+    utils.ApiRequest('https://api.ipify.org?format=json').then((data) => {
+      if (data.ip) {
+        this.setState({ip: data.ip})
+      } else {
+        console.log("ip request failed")
+      }
+    });
     this.connect();
   }
 
@@ -84,15 +92,18 @@ class Restaurant extends React.Component {
       });
 
       if (this.props.restaurant.id) {
+        const confirm = { function: 'setRestaurant', restaurantID: this.props.restaurant.id, "ip": this.state.ip};
+
+        this.state.ws.send(JSON.stringify(confirm));
         this.getPending();
       }
       setInterval(() => {
-        const confirm = {"function": "heartbeat", "restaurantID": this.props.restaurant.id}
+        const confirm = {"function": "heartbeat", "restaurantID": this.props.restaurant.id, "ip": this.state.ip}
         ws.send(JSON.stringify(confirm));
         this.setState({heartbeat: true});
         setTimeout(() => {
           this.heartbeat();
-        }, 5 * 1000);
+        }, 30 * 1000);
       }, 5 * 60 * 1000);
 
       that.timeout = 250; // reset timer to 250 on open of websocket connection
@@ -183,7 +194,7 @@ class Restaurant extends React.Component {
         id: data.res,
       });
         this.setRestaurant();
-        const confirm = { function: 'setRestaurant', restaurantID: data.res };
+        const confirm = { function: 'setRestaurant', restaurantID: data.res, "ip": this.state.ip };
 
         this.state.ws.send(JSON.stringify(confirm));
         this.getPending();
@@ -226,7 +237,7 @@ class Restaurant extends React.Component {
 
   handlePending(data) {
     if (data) {
-      const messages = this.state.messages;
+      const messages = [];
       const orders = data.msg.orders;
       if (data.msg.status && data.msg.status === 200 && orders && orders.length) {
         orders.forEach((entry) => {
