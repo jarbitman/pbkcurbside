@@ -149,11 +149,13 @@ class Restaurant extends React.Component {
 
   parseMessage(data) {
     const parsed = JSON.parse(data.data);
+    console.log(parsed)
     if (parsed.msg.function === 'addMessage') {
       this.addMessage(parsed);
       const confirm = {"function": "notifyRestaurant","linkHEX": parsed.msg.data.linkID}
       this.state.ws.send(JSON.stringify(confirm))
     } else if (parsed.msg.function === 'clearGuest') {
+
       if (parsed.msg.status && parsed.msg.status === 200) {
         const messages = this.state.messages.filter((item, index) => item.linkID !== parsed.msg.id);
         this.setState({
@@ -166,8 +168,22 @@ class Restaurant extends React.Component {
       this.setState({heartbeat: false});
     } else if(parsed.msg.function === 'refresh'){
       window.location.reload(false);
+    } else if(parsed.msg.function === 'acknowledgeGuest'){
+      const entry = {...this.state.messages.filter((item, index) => item.linkID === parsed.msg.id)};
+      const messages = this.state.messages.filter((item, index) => item.linkID !== parsed.msg.id);
+      messages.push({
+        guest: entry.guest,
+        linkID: parsed.msg.id,
+        check: entry.check,
+        status: 'acknowledged',
+        car: entry.car,
+        arrived: entry.arrived,
+        ats: entry.ats,
+      });
+      this.setState({
+        messages
+      });
     }
-
   }
 
   addMessage(data) {

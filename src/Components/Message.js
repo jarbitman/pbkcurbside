@@ -24,12 +24,13 @@ class Message extends React.Component {
       Config,
       API: Config.apiAddress,
       show: true,
-      variant: 'warning',
+      variant: '',
       message: {},
       time: 0,
       start: 0,
       isOn: false,
       arrived: '',
+      id: null,
     };
   }
 
@@ -37,14 +38,18 @@ class Message extends React.Component {
   componentDidMount() {
     this.warnLateOrder();
     if (this.props.msg) {
-      console.log(this.props.msg)
       let milliseconds = Date.now();
       if(this.props.msg.ats){
         milliseconds = this.props.msg.ats * 1000;
       }
       const dateName = new Date().getTime() *1000;
-      this.setState({
+      let variant = 'warning';
+      if(this.props.msg.status === 'acknowledged'){
+        variant = 'success';
+      }
 
+      this.setState({
+        variant: variant,
         message: this.props.msg,
         isOn: true,
         time: dateName,
@@ -58,12 +63,24 @@ class Message extends React.Component {
 
   }
 
+  componentDidUpdate(prevProps, prevState, snapshot) {
+
+    if (prevProps.msg.status !== this.props.msg.status && this.props.msg.status === 'acknowledged') {
+      this.setState({
+        variant: 'success',
+      })
+    }
+  }
+
   componentWillUnmount() {
     this.setState({
+      variant: '',
+      message: {},
       time: 0,
       start: 0,
       isOn: false,
     })
+    clearInterval(this.timer)
     return () => clearTimeout(this.honktimeout);
   }
 
@@ -77,24 +94,16 @@ class Message extends React.Component {
   }
 
   acknowledgeOrder() {
-    this.props.removeMessage(this.state.message.linkID, 'acknowledgeGuest');
-    const message = {
-      status: 'acknowledged',
-      car: this.state.message.car,
-      guest: this.state.message.guest,
-      check: this.state.message.check,
-      linkID: this.state.message.linkID,
-      arrived: this.state.message.arrived,
-    }
+    this.props.removeMessage(this.props.msg.linkID, 'acknowledgeGuest');
     this.warnLateOrder();
     this.setState({
       variant: 'success',
-      message
+      id: this.props.msg.linkID,
     });
   }
 
   clearOrder() {
-    this.props.removeMessage(this.state.message.linkID, 'clearGuest');
+    this.props.removeMessage(this.props.msg.linkID, 'clearGuest');
   }
 
   render() {
@@ -121,7 +130,7 @@ class Message extends React.Component {
               </Col>
               <Col sm={1} style={{ position: 'absolute', right: '10px' }}>
                 <ButtonGroup>
-                  {this.state.message.status === 'arrived' ? (
+                  {this.props.msg.status === 'arrived' ? (
                     <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={48}/></Button>
                   ) : (
                     <Button variant="link"><X className={'text-danger'} onClick={() => this.clearOrder()} size={48}/></Button>
