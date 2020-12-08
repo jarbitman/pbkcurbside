@@ -1,21 +1,34 @@
 import React from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import Modal from 'react-bootstrap/Modal';
 import * as utils from '../../utils';
 import { setLoginObject, setRestaurantObject } from '../../redux/actions/actions';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Button } from 'react-bootstrap';
 import '../../fonts.css';
+import RestaurantStatus from '../RestaurantStatus';
 
 class Header extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.resetRestaurant = this.resetRestaurant.bind(this);
+    this.showModal = this.showModal.bind(this);
+    this.handleClose = this.handleClose.bind(this);
 
     this.state = {
-      restaurantName: ''
+      restaurantName: '',
+      show: false,
     };
+  }
+
+  handleClose(){
+    this.setState({show: false})
+  }
+
+  showModal(){
+    this.setState({show: true})
   }
 
   resetRestaurant(){
@@ -36,7 +49,16 @@ class Header extends React.Component {
             <h3 style={{ color: utils.pbkStyle.orange, fontWeight: 'bold', textAlign: 'center', fontFamily: 'Trade Gothic LT Pro Bold' }}>{this.props.restaurant.name} Curbside Orders</h3>
           </Col>
           <Col sm={2}>
-            <Button variant={'outline-info'} onClick={this.resetRestaurant} >Switch Restaurant</Button>
+            <Row>
+              <Button variant={'outline-info'} onClick={this.resetRestaurant} style={{width:'100%'}} >Switch Restaurant</Button>
+            </Row>
+            {this.props.restaurant.id === "-1" ? (
+              <Row style={{paddingTop: '5px'}}>
+                <Button variant={'outline-dark'} style={{width:'100%'}} onClick={this.showModal}>Restaurant Status</Button>
+                <RestaurantStatus show={this.state.show} handleClose={this.handleClose} />
+              </Row>
+            ):(<></>)
+            }
           </Col></>):(<></>)
         }
       </Row>

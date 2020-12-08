@@ -386,8 +386,9 @@ class Restaurant extends React.Component {
             }
             return (
               <Row key={'button_' + i} style={{ paddingTop: '1em' }}>
-                <Button style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-' + variant} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4 data-res={entry.restaurantID}
-                                                                                                                                                                                                                   data-name={entry.restaurantName}>{entry.restaurantName}</h4></Button>
+                <Button style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-' + variant} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}>
+                  <h4 data-res={entry.restaurantID} data-name={entry.restaurantName}>{entry.restaurantName}</h4>
+                </Button>
               </Row>
             );
           })}
