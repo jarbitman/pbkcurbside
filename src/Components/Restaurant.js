@@ -377,12 +377,16 @@ class Restaurant extends React.Component {
 
     if (!this.props.restaurant.id) {
       return (
-        <Container style={{ paddingTop: '1em' }}>
-          <h2>Please Select Your Restaurant</h2>
+        <Container style={{ paddingTop: '1em', paddingBottom: '1em' }}>
+          <h2 style={{color: utils.pbkStyle.orange, fontFamily: 'Trade Gothic LT Pro Bold'}}>Please Select Your Restaurant</h2>
           {this.props.loggedIn.restaurants.map((entry, i) => {
+            let variant = 'info';
+            if(entry.restaurantID === -1){
+              variant = 'dark';
+            }
             return (
               <Row key={'button_' + i} style={{ paddingTop: '1em' }}>
-                <Button style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-info'} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4 data-res={entry.restaurantID}
+                <Button style={{ width: '100%', textAlign: 'center', padding: '1em' }} variant={'outline-' + variant} onClick={this.selectRestaurant} data-res={entry.restaurantID} data-name={entry.restaurantName}><h4 data-res={entry.restaurantID}
                                                                                                                                                                                                                    data-name={entry.restaurantName}>{entry.restaurantName}</h4></Button>
               </Row>
             );
