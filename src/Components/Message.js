@@ -6,7 +6,11 @@ import Button from 'react-bootstrap/Button';
 import Fade from 'react-bootstrap/Fade';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-const ms = require('pretty-ms')
+import { setLoginObject, setRestaurantObject } from '../redux/actions/actions';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+
+const ms = require('pretty-ms');
 
 class Message extends React.Component {
 
@@ -30,21 +34,20 @@ class Message extends React.Component {
       start: 0,
       isOn: false,
       arrived: '',
-      id: null,
+      id: null
     };
   }
-
 
   componentDidMount() {
     this.warnLateOrder();
     if (this.props.msg) {
       let milliseconds = Date.now();
-      if(this.props.msg.ats){
+      if (this.props.msg.ats) {
         milliseconds = this.props.msg.ats * 1000;
       }
-      const dateName = new Date().getTime() *1000;
+      const dateName = new Date().getTime() * 1000;
       let variant = 'warning';
-      if(this.props.msg.status === 'acknowledged'){
+      if (this.props.msg.status === 'acknowledged') {
         variant = 'success';
       }
 
@@ -63,25 +66,16 @@ class Message extends React.Component {
 
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-
-    if (prevProps.msg.status !== this.props.msg.status && this.props.msg.status === 'acknowledged') {
-      this.setState({
-        variant: 'success',
-      })
-    }
-  }
-
   componentWillUnmount() {
     this.setState({
       variant: '',
       message: {},
       time: 0,
       start: 0,
-      isOn: false,
-    })
-    clearInterval(this.timer)
-    return () => clearTimeout(this.honktimeout);
+      isOn: false
+    });
+    clearInterval(this.timer);
+    clearTimeout(this.honktimeout);
   }
 
   warnLateOrder() {
@@ -98,7 +92,7 @@ class Message extends React.Component {
     this.warnLateOrder();
     this.setState({
       variant: 'success',
-      id: this.props.msg.linkID,
+      id: this.props.msg.linkID
     });
   }
 
@@ -108,19 +102,36 @@ class Message extends React.Component {
 
   render() {
     if (this.props.msg) {
+      let variant = 'warning';
+      if (Date.now() - this.state.start <= 90000) {
+        if (this.props.msg && this.props.msg.status === 'acknowledged') {
+          variant = 'success';
+        }
+      } else {
+        variant = 'danger';
+      }
+
       return (
         <Fade>
-          <Alert variant={this.state.variant}>
+          <Alert variant={variant}>
             <Row>
               <Col sm={11}>
-                  <Alert.Heading>
-                    <strong>{this.state.message.guest} Order # {this.state.message.check}</strong>
-                  </Alert.Heading>
-                <p>Arrived: {this.state.message.arrived}</p>
-                <h5><strong>Waiting: {ms(Math.round(this.state.time/1000)*1000)}</strong></h5>
-                <hr />
+                <Alert.Heading>
+                  <strong>
+                    {this.props.msg.guest} Order # {this.props.msg.check}
+                    {this.props.restaurant.id && this.props.restaurant.id === '-1' ?
+                      (
+                        <>
+                          &nbsp; ({this.props.msg.restaurantName})
+                        </>
+                      ) : (<></>)}
+                  </strong>
+                </Alert.Heading>
+                <p>Arrived: {this.props.msg.arrived}</p>
+                <h5><strong>Waiting: {ms(Math.round(this.state.time / 1000) * 1000)}</strong></h5>
+                <hr/>
                 <p className="mb-0"><strong>Vehicle Information:</strong></p>
-                {this.state.message.car && this.state.message.car.map((entry, i) => {
+                {this.props.msg.car && this.props.msg.car.map((entry, i) => {
                   return (
                     <p key={'mod_' + i}>{entry}</p>
                   );
@@ -129,14 +140,17 @@ class Message extends React.Component {
                 }
               </Col>
               <Col sm={1} style={{ position: 'absolute', right: '10px' }}>
-                <ButtonGroup>
-                  {this.props.msg.status === 'arrived' ? (
-                    <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={48}/></Button>
-                  ) : (
-                    <Button variant="link"><X className={'text-danger'} onClick={() => this.clearOrder()} size={48}/></Button>
-                  )
-                  }
-                </ButtonGroup>
+                {this.props.restaurant.id && this.props.restaurant.id !== '-1' ? (
+                  <ButtonGroup>
+                    {this.props.msg.status === 'arrived' ? (
+                      <Button variant="link" onClick={this.acknowledgeOrder}><Check className={'text-success'} size={48}/></Button>
+                    ) : (
+                      <Button variant="link"><X className={'text-danger'} onClick={() => this.clearOrder()} size={48}/></Button>
+                    )
+                    }
+                  </ButtonGroup>
+                ) : (<></>)
+                }
               </Col>
             </Row>
           </Alert>
@@ -148,4 +162,27 @@ class Message extends React.Component {
   }
 }
 
-export default Message;
+const mapStateToProps = (state) => {
+  return {
+    loggedIn: state.loggedIn,
+    restaurant: state.restaurant
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setLoginObject: (loggedIn) => {
+      dispatch(setLoginObject(loggedIn));
+    },
+    setRestaurantObject: (restaurant) => {
+      dispatch(setRestaurantObject(restaurant));
+    }
+  };
+};
+
+Message.propTypes = {
+  loggedIn: PropTypes.object,
+  setLoginObject: PropTypes.func.isRequired
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Message);

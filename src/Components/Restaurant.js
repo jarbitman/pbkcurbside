@@ -149,7 +149,6 @@ class Restaurant extends React.Component {
 
   parseMessage(data) {
     const parsed = JSON.parse(data.data);
-    console.log(parsed)
     if (parsed.msg.function === 'addMessage') {
       this.addMessage(parsed);
       const confirm = {"function": "notifyRestaurant","linkHEX": parsed.msg.data.linkID}
@@ -168,18 +167,16 @@ class Restaurant extends React.Component {
       this.setState({heartbeat: false});
     } else if(parsed.msg.function === 'refresh'){
       window.location.reload(false);
-    } else if(parsed.msg.function === 'acknowledgeGuest'){
-      const entry = {...this.state.messages.filter((item, index) => item.linkID === parsed.msg.id)};
-      const messages = this.state.messages.filter((item, index) => item.linkID !== parsed.msg.id);
-      messages.push({
-        guest: entry.guest,
-        linkID: parsed.msg.id,
-        check: entry.check,
-        status: 'acknowledged',
-        car: entry.car,
-        arrived: entry.arrived,
-        ats: entry.ats,
-      });
+    } else if(parsed.msg.function === 'acknowledgeGuest') {
+      let messages = this.state.messages;
+
+      for (let i = 0; i < messages.length; i++) {
+        if (parseInt(messages[i].linkID) === parseInt(parsed.msg.id)) {
+          messages[i].status = 'acknowledged';
+          break;
+        }
+      }
+
       this.setState({
         messages
       });
@@ -264,7 +261,6 @@ class Restaurant extends React.Component {
       const messages = [];
       const orders = data.msg.orders;
       if (data.msg.status && data.msg.status === 200 && orders && orders.length) {
-     //   console.log(orders)
         orders.forEach((entry) => {
           messages.push({
             guest: entry.guest,
@@ -274,6 +270,7 @@ class Restaurant extends React.Component {
             car: entry.car,
             arrived: entry.arrived,
             ats: entry.ats,
+            restaurantName: entry.restaurantName,
           });
         });
         this.setState({
