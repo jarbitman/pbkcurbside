@@ -89,7 +89,7 @@ class Home extends React.Component {
     utils.ApiPostRequest(this.state.API + 'link', confirm).then((data) => {
       if (data) {
         if (data.status && data.status === 200) {
-          error.push({ msg: 'Thank you for confirming, the restaurant has been notified.', variant: 'success' });
+          error.push({ msg: data.message, variant: 'success' });
         } else {
           error.push({ msg: data.message, variant: data.variant });
         }
@@ -117,7 +117,16 @@ class Home extends React.Component {
         <Container style={{ margin: 'auto', textAlign: 'center', paddingTop: '1em' }}>
           {
             this.state.error.map((entry, i) => {
-              return (<Alert key={'message_' + i} variant={entry.variant}>{entry.msg}</Alert>);
+              return (
+                <Alert key={'message_' + i} variant={entry.variant}>
+                  {entry.msg.map((notice, ia) => {
+                    return (
+                    <p key={'notice_' + ia}>{notice}</p>
+                    )
+                  })
+                  }
+                </Alert>
+              );
             })
           }
         </Container>
