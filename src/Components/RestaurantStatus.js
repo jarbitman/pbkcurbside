@@ -71,15 +71,13 @@ class RestaurantStatus extends React.Component {
             {this.state.restaurantStatus.length ? (
               <Container>
                 {this.props.loggedIn.restaurants.map((entry, i) => {
+                  let restaurant = {};
                   if(entry.restaurantID !== -1) {
-                    let restaurant = {};
-                    this.state.restaurantStatus && this.state.restaurantStatus.map((r, ia) => {
-                      if(r.restaurantID === entry.restaurantID){
-                        restaurant = r;
-                      }else{
-                        restaurant = {};
+                      for (let i = 0; i < this.state.restaurantStatus.length; i++) {
+                      if(parseInt(this.state.restaurantStatus[i].restaurantID)=== parseInt(entry.restaurantID)){
+                        restaurant = this.state.restaurantStatus[i];
                       }
-                    })
+                    }
                     let textVariant = 'text-success';
                     /*
                     if(restaurant.signOn) {
@@ -94,7 +92,7 @@ class RestaurantStatus extends React.Component {
                     return (
                       <Row key={'restaurant_' + i} style={{padding: '1em', textAlign: 'left'}}>
                         <Col>{entry.restaurantName}</Col>
-                        {restaurant.signOn ? (
+                        {restaurant.latest ? (
                           <Col><span className={textVariant}>{restaurant.latest}</span> </Col>):(
                           <Col><span className={'text-danger'}>Offline</span> </Col>)}
                       </Row>);
