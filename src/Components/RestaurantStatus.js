@@ -63,7 +63,6 @@ class RestaurantStatus extends React.Component {
 
 
   render() {
-    let restaurant = {};
     return (
       <Modal show={this.props.show} onHide={this.props.handleClose}>
         <Modal.Header closeButton><h3 style={{ color: utils.pbkStyle.orange, fontWeight: 'bold', textAlign: 'center', fontFamily: 'Trade Gothic LT Pro Bold' }} >Restaurant Online Status</h3></Modal.Header>
@@ -73,9 +72,12 @@ class RestaurantStatus extends React.Component {
               <Container>
                 {this.props.loggedIn.restaurants.map((entry, i) => {
                   if(entry.restaurantID !== -1) {
+                    let restaurant = {};
                     this.state.restaurantStatus && this.state.restaurantStatus.map((r, ia) => {
                       if(r.restaurantID === entry.restaurantID){
                         restaurant = r;
+                      }else{
+                        restaurant = {};
                       }
                     })
                     let textVariant = 'text-success';
