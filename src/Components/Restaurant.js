@@ -271,6 +271,7 @@ class Restaurant extends React.Component {
             arrived: entry.arrived,
             ats: entry.ats,
             restaurantName: entry.restaurantName,
+            messageReceived: entry.messageReceived,
           });
         });
         this.setState({

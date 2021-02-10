@@ -9,6 +9,7 @@ import Col from 'react-bootstrap/Col';
 import { setLoginObject, setRestaurantObject } from '../redux/actions/actions';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import * as utils from '../utils.js';
 
 const ms = require('pretty-ms');
 
@@ -34,7 +35,8 @@ class Message extends React.Component {
       start: 0,
       isOn: false,
       arrived: '',
-      id: null
+      id: null,
+      messageReceived: 1
     };
   }
 
@@ -115,29 +117,40 @@ class Message extends React.Component {
         <Fade>
           <Alert variant={variant}>
             <Row>
-              <Col sm={11}>
-                <Alert.Heading>
-                  <strong>
-                    {this.props.msg.guest} Order # {this.props.msg.check}
-                    {this.props.restaurant.id && this.props.restaurant.id === '-1' ?
-                      (
-                        <>
-                          &nbsp; ({this.props.msg.restaurantName})
-                        </>
-                      ) : (<></>)}
-                  </strong>
-                </Alert.Heading>
-                <p>Arrived: {this.props.msg.arrived}</p>
-                <h5><strong>Waiting: {ms(Math.round(this.state.time / 1000) * 1000)}</strong></h5>
-                <hr/>
-                <p className="mb-0"><strong>Vehicle Information:</strong></p>
-                {this.props.msg.car && this.props.msg.car.map((entry, i) => {
-                  return (
-                    <p key={'mod_' + i}>{entry}</p>
-                  );
-                })
+              <Col sm={6}>
+                <Row>
+                  <div style={{ padding: '.5em' }}>
+                      <Alert.Heading>
+                        <strong>
+                        {utils.titleCase(this.props.msg.guest)} Order # {this.props.msg.check}
+                        {this.props.restaurant.id && this.props.restaurant.id === '-1' ?
+                          (
+                            <>
+                              &nbsp; ({this.props.msg.restaurantName})
+                            </>
+                          ) : (<></>)}
+                        </strong>
+                      </Alert.Heading>
+                      {this.props.msg.messageReceived ?
+                        (<div><h5><strong>Waiting: {ms(Math.round(this.state.time / 1000) * 1000)}</strong></h5> &nbsp;&nbsp; Arrived: {this.props.msg.arrived}</div>) :
+                        (<div style={{ backgroundColor: '#FFFFFF', padding: '.5em', color: '#f3212a', border: 'solid 2px #f3212a', textAlign: 'center' }}>GUEST DIDN'T RECEIVE LINK</div>)
+                      }
+                  </div>
+                </Row>
+              </Col>
+              <Col sm={5}>
+                <div style={{ padding: '.5em' }}>
+                  <h5><strong>Vehicle Information:</strong></h5>
+                  <ul>
+                  {this.props.msg.car && this.props.msg.car.map((entry, i) => {
+                    return (
+                      <li key={'mod_' + i}>{entry}</li>
+                    );
+                  })
 
-                }
+                  }
+                  </ul>
+                </div>
               </Col>
               <Col sm={1} style={{ position: 'absolute', right: '10px' }}>
                 {this.props.restaurant.id && this.props.restaurant.id !== '-1' ? (
